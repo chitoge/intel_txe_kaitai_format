@@ -41,6 +41,21 @@ types:
         type: u2
       - id: fit_build
         type: u2
+  manifest_extension_entry:
+    seq:
+      - id: extension_tag
+        type: u4
+      - id: extension_region_size
+        type: u4
+      - id: extension_payload
+        type: u1
+        repeat: expr
+        repeat-expr: extension_region_size - 8
+  manifest_extension_entries:
+    seq:
+      - id: extension
+        type: manifest_extension_entry
+        repeat: eos
   cpd_header:
     seq:
       - id: tag
@@ -74,7 +89,7 @@ types:
   cpd_entry:
     seq:
       - id: name
-        type: str
+        type: strz
         encoding: ASCII
         size: 12
       - id: offset_attribute
@@ -82,6 +97,14 @@ types:
       - id: size
         type: u4
       - type: u4
+    instances:
+      cpd_payload:
+        type:
+          switch-on: name.reverse.substring(0, 4)
+          cases:
+            '"tem."': manifest_extension_entries
+        pos: offset_attribute.offset_from_cpd
+        size: size
   mn2_manifest_r0_metadata:
     seq:
       - id: security_version_number_8
@@ -239,6 +262,7 @@ types:
       cpd_region:
         pos: offset
         type: cpd_region
+        size-eos: true
         if: cpd_check == 0x44504324
   fpt_region_type:
     seq:
